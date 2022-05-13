@@ -41,7 +41,7 @@ class data_set(dataset_torch):
     def __init__(self, root, split='train', data_type='BraTS'):
         self.root = root
         assert split in ('train', 'val', 'test')
-        assert data_type in ('BraTS', 'SISS_1', 'SISS_2', 'SISS_3', 'SISS_4')
+        assert data_type in ('BraTS', 'SISS')
         self.split = split
         self.data_type = data_type
         self.imgs, self.nlist = _make_image_namelist(os.path.join(self.root, self.split + '_' + self.data_type))
