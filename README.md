@@ -1,4 +1,4 @@
-# SIGN-Stroke-lesion-segmentation-from-low-quality-and-few-shot-MRIs
+# SIGN: Stroke-lesion-segmentation-from-low-quality-and-few-shot-MRIs
 
 This code is for the paper Stroke lesion segmentation from low-quality and few-shot MRIs via Similarity-weighted self-ensembling framework.
 
