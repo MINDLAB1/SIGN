@@ -8,6 +8,7 @@ from ResUNet import ResUNet
 Referred to https://github.com/Mhaiyang/CVPR2021_PFNet
 '''
 
+
 ################### Channel Attention Block ######################
 
 class CA_Block(nn.Module):
@@ -58,11 +59,12 @@ class SA_Block(nn.Module):
         return out
 
 
-################### ASPP ####################
-
-class ASPP_Block(nn.Module):
+###################################################################
+#################### Context Exploration Block ####################
+###################################################################
+class Context_Exploration_Block(nn.Module):
     def __init__(self, input_channels):
-        super(ASPP_Block, self).__init__()
+        super(Context_Exploration_Block, self).__init__()
         self.input_channels = input_channels
         self.channels_single = int(input_channels / 4)
 
@@ -159,14 +161,14 @@ class Discern(nn.Module):
         self.channel2 = channel2
 
         self.feature_up_sample = nn.Sequential(nn.Conv3d(self.channel2, self.channel1, 3, 1, 1),
-                                nn.BatchNorm3d(self.channel1), nn.ReLU(),
-                                nn.ConvTranspose3d(self.channel1, self.channel1, 2, 2))
+                                               nn.BatchNorm3d(self.channel1), nn.ReLU(),
+                                               nn.ConvTranspose3d(self.channel1, self.channel1, 2, 2))
 
         self.input_prediction = nn.Sequential(nn.ConvTranspose3d(1, 1, 2, 2), nn.Sigmoid())
         self.output_prediction = nn.Conv3d(self.channel1, 1, 3, 1, 1)
 
-        self.false_positive = ASPP_Block(self.channel1)
-        self.false_negative = ASPP_Block(self.channel1)
+        self.false_positive = Context_Exploration_Block(self.channel1)
+        self.false_negative = Context_Exploration_Block(self.channel1)
         self.alpha = nn.Parameter(torch.ones(1))
         self.beta = nn.Parameter(torch.ones(1))
         self.bn1 = nn.BatchNorm3d(self.channel1)
@@ -201,9 +203,7 @@ class Discern(nn.Module):
         return refined_feature, output_prediction
 
 
-###################################################################
-# ########################## Identify-to-Discern NETWORK ##############################
-###################################################################
+########################## Identify-to-Discern NETWORK ############
 class IDNet(nn.Module):
     def __init__(self, backbone_path=None):
         super(IDNet, self).__init__()
@@ -222,7 +222,7 @@ class IDNet(nn.Module):
         self.layer3 = resUNet.encoder_stage2
         self.layer4 = resUNet.encoder_stage3
 
-        # channel reduction |  skip connection
+        # skip connection
         self.cr4 = nn.Sequential(nn.Conv3d(512, 512, 3, 1, 1), nn.BatchNorm3d(512), nn.ReLU())
         self.cr3 = nn.Sequential(nn.Conv3d(256, 256, 3, 1, 1), nn.BatchNorm3d(256), nn.ReLU())
         self.cr2 = nn.Sequential(nn.Conv3d(64, 64, 3, 1, 1), nn.BatchNorm3d(64), nn.ReLU())
@@ -243,22 +243,23 @@ class IDNet(nn.Module):
     def forward(self, x_t1, x_t2, x_flair):
         x = torch.cat((x_t1, x_t2), 1)
         x = torch.cat((x, x_flair), 1)
+        # encoder
         layer0 = self.layer0(x)
         layer1 = self.layer1(layer0)
         layer2 = self.layer2(layer1)
         layer3 = self.layer3(layer2)
         layer4 = self.layer4(layer3)
 
-        # channel reduction
+        # skip
         cr4 = self.cr4(layer4)
         cr3 = self.cr3(layer3)
         cr2 = self.cr2(layer2)
         cr1 = self.cr1(layer1)
 
-        # positioning
+        # decoder
+        # identify the tumor
         attention_features, predict4 = self.identify(cr4)
-
-        # focus
+        # refine the segmentation
         decoder_features3, predict3 = self.discern3(cr3, attention_features, predict4)
         decoder_features2, predict2 = self.discern2(cr2, decoder_features3, predict3)
         decoder_features1, predict1 = self.discern1(cr1, decoder_features2, predict2)

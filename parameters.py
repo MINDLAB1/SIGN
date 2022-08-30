@@ -19,7 +19,7 @@ EPS_START = 0.95
 EPS_END = 0.006
 
 decay = 0.95
-lr = 1e-3
+lr = 1e-4
 n_labels = 2
 
 
