@@ -146,7 +146,7 @@ class Identify(nn.Module):
 
     def forward(self, x):
         channel_attention = self.channel_attention(x)
-        spatial_attention = self.sab(channel_attention)
+        spatial_attention = self.spatial_attention(channel_attention)
         prediction = self.map_prediction(spatial_attention)
 
         return spatial_attention, prediction
