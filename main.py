@@ -45,7 +45,7 @@ def train(model, teacher_model, ema_model, TrainMetaData, optimizer, teacher_opt
         iter_train = batImageGenTrains[0].__iter__()
         for j in range(np.int(np.floor(train_img_num / iter_num))):
             t1_train, t2_train, flair_train, target_train, _ = iter_train.__next__()
-            t1_train, t2_train, flair_train, target_train_low = t1_train.float().to(device), t2_train.float().to(device), flair_train.float().to(device), target_train.float().to(device)
+            t1_train, t2_train, flair_train, target_train = t1_train.float().to(device), t2_train.float().to(device), flair_train.float().to(device), target_train.float().to(device)
 
             core_1_train, core_2_train, core_3_train, core_4_train, output_train = model(t1_train, t2_train, flair_train)
             _, _, _, _, output_train_test = teacher_model(t1_train, t2_train, flair_train)
